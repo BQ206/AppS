@@ -189,11 +189,11 @@
                 <Button
                     android:id="@+id/btnUp"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginTop="0dp"
                     android:fontFamily="@font/nexa_light"
-                    android:text="↖"
-                    android:textSize="50dp"
+                    android:text="◄"
+                    android:textSize="80dp"
                     tools:ignore="MissingConstraints" />
 
                 <LinearLayout
@@ -671,8 +671,8 @@
                         android:id="@+id/btn"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:fontFamily="@font/nexa_light"
-                        android:text="↘"
+                        android:fontFamily="@font/roboto"
+                        android:text="►"
                         android:textSize="50dp"
                         tools:ignore="MissingConstraints" />
 

@@ -1,25 +1,56 @@
 package com.android.myapplication;
 
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.app.ActivityManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
+import com.google.android.gms.common.util.IOUtils;
+
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
+
+import android.os.Bundle;
+import android.util.Log;
+import android.widget.*;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Hashtable;
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     ProgressBar pgb;
 
     ImageButton Act3;
+    ImageButton go_ystb;
 
     TextView Btnsort;
 
@@ -99,10 +131,11 @@ public class MainActivity extends AppCompatActivity {
 
     int Stock_C = 0;
 
+    OkHttpClient okHttpClient;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -111,7 +144,14 @@ public class MainActivity extends AppCompatActivity {
         int resID = getResources().getIdentifier(idd, "id", getPackageName());
         textView = (TextView)findViewById(resID);
 
+        System.out.println("doo");
+        if(!foregroundServiceRunning()) {
+            Intent serviceIntent;
+            serviceIntent = new Intent(this, MyForegroundService.class);
+            startForegroundService(serviceIntent);
+        }
 
+        createNotificationChannel();
 
 
         int scrolID = getResources().getIdentifier("scrollView", "id", getPackageName());
@@ -132,11 +172,21 @@ public class MainActivity extends AppCompatActivity {
         int bnfD = getResources().getIdentifier("newsim", "id", getPackageName());
         Act3 = (ImageButton) findViewById(bnfD);
 
+        int bnfDz = getResources().getIdentifier("butzyyon", "id", getPackageName());
+        go_ystb = (ImageButton) findViewById(bnfDz);
+
 
         Act3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 go_news();
+            }
+        });
+
+        go_ystb.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                go_y_stck();
             }
         });
 
@@ -231,6 +281,18 @@ public class MainActivity extends AppCompatActivity {
 
         Btnsort_symb.setText("▲");
 
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(false)
+                .build();
+        String m_uid = "U44u6sNAyAq7kfgNGd4a";
+        RequestBody formbody
+                = new FormBody.Builder().add("muid", m_uid)
+                .build();
+        System.out.println("gdshjkgdsjkjk");
+
         Btnsort_symb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -249,6 +311,7 @@ public class MainActivity extends AppCompatActivity {
         Btnsort.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                build_not("","");
                 if(Btnsort.getText().toString() == "▲") {
                     Btnsort.setText("▼");
                     pyobj.callAttr("sort_name");
@@ -264,6 +327,32 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel("YOUR_CHANNEL_ID",
+                    "YOUR_CHANNEL_NAME",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription("YOUR_NOTIFICATION_CHANNEL_DESCRIPTION");
+            mNotificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    void build_not(String title, String messg ){
+        System.out.println("f");
+        NotificationCompat.Builder mbuilder = new NotificationCompat.Builder(getApplicationContext(), "YOUR_CHANNEL_ID")
+                .setSmallIcon(R.drawable.ic_money)
+                .setContentTitle("title")
+                .setContentText("messg");
+        NotificationManager notificationManagerz = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        notificationManagerz.notify(0, mbuilder.build());
+        System.out.println("f");
+
+    }
+
     void clicktext(String symbz, String namez,String prcez){
         pgb.setVisibility(View.VISIBLE);
         Intent intent = new Intent(this, MainActivity2.class);
@@ -271,6 +360,16 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(Extra_name, namez);
         intent.putExtra(Extra_prce, prcez);
         startActivity(intent);
+    }
+
+    public boolean foregroundServiceRunning(){
+        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for(ActivityManager.RunningServiceInfo service: activityManager.getRunningServices(Integer.MAX_VALUE)) {
+            if(MyForegroundService.class.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     void search_stck(){
@@ -285,6 +384,11 @@ public class MainActivity extends AppCompatActivity {
         pgb.setVisibility(View.VISIBLE);
         Intent intent = new Intent(this, MainActivity3.class);
         startActivity(intent);
+    }
+
+    void go_y_stck(){
+        Intent intentz = new Intent(this, MainActivity4.class);
+        startActivity(intentz);
     }
 
     void resetStrings()

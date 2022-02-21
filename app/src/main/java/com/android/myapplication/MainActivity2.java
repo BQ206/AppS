@@ -1,6 +1,8 @@
 package com.android.myapplication;
 
 
+import static android.graphics.Color.BLACK;
+import static android.graphics.Color.GREEN;
 import static android.graphics.Color.WHITE;
 
 import android.content.Intent;
@@ -13,7 +15,9 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.chaquo.python.PyObject;
@@ -58,9 +62,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import okhttp3.OkHttpClient;
 
-public class MainActivity2 extends AppCompatActivity, {
+
+public class MainActivity2 extends AppCompatActivity {
     TextView textView;
+
+    ImageView plot;
 
     TextView descr;
     TextView namez;
@@ -73,6 +81,9 @@ public class MainActivity2 extends AppCompatActivity, {
     Button Btn3mo;
     Button Btn6mo;
 
+    ImageButton BtnHome;
+    ImageButton BtNewsv;
+
     Button Btn1yr;
     Button Btn5yr;
 
@@ -80,7 +91,7 @@ public class MainActivity2 extends AppCompatActivity, {
 
     Button back;
 
-    Button cr_usr;
+
 
     FirebaseAuth mAuth;
 
@@ -90,12 +101,14 @@ public class MainActivity2 extends AppCompatActivity, {
 
     String m_uid;
 
+    ProgressBar pgb;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         mAuth = FirebaseAuth.getInstance();
-
 
 
         setContentView(R.layout.activity_main2);
@@ -105,6 +118,10 @@ public class MainActivity2 extends AppCompatActivity, {
         String name = intent.getStringExtra(MainActivity.Extra_name);
         String prcez = intent.getStringExtra(MainActivity.Extra_prce);
         py = Python.getInstance();
+
+        int progID2 = getResources().getIdentifier("progbar", "id", getPackageName());
+        pgb = (ProgressBar)findViewById(progID2);
+        pgb.setVisibility(View.GONE);
 
         pyobj = py.getModule("myscript");
 
@@ -125,6 +142,27 @@ public class MainActivity2 extends AppCompatActivity, {
 
         int bnUres = getResources().getIdentifier("wk1", "id", getPackageName());
         Btn1wk = (Button)findViewById(bnUres);
+
+        int drnl = getResources().getIdentifier("butzon", "id", getPackageName());
+        BtnHome = (ImageButton)findViewById(drnl);
+
+        int nenl = getResources().getIdentifier("newsim", "id", getPackageName());
+        BtNewsv = (ImageButton)findViewById(nenl);
+
+        BtNewsv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                go_news();
+            }
+        });
+
+
+        BtnHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                go_back();
+            }
+        });
 
         Btn1wk.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -175,44 +213,30 @@ public class MainActivity2 extends AppCompatActivity, {
 
 
 
-        int bnUre = getResources().getIdentifier("backbn", "id", getPackageName());
-        back = (Button)findViewById(bnUre);
 
-        int sbnUre = getResources().getIdentifier("cre_user", "id", getPackageName());
-        cr_usr = (Button)findViewById(sbnUre);
+
+
 
         int sbnzUre = getResources().getIdentifier("sel_stck", "id", getPackageName());
         sl_stk = (Button)findViewById(sbnzUre);
 
-        back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                go_back();
-            }
-        });
+
 
         sl_stk.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                slct_stck_rm(name);
+                PyObject obju2 = pyobj.callAttr("peg_rat", symb);
+                PyObject obju3 = pyobj.callAttr("book_v", symb);
+                slct_stck(name);
+                set_prc(symb, prcez );
+                set_pegr(symb, obju2.toInt() );
+                set_bk(symb, obju3.toInt());
+
             }
         });
 
-        cr_usr.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                create_acc("brian_quilty@hotmail.com","here1243");
-            }
-        });
 
-        int loginid = getResources().getIdentifier("login", "id", getPackageName());
-        Login = (Button)findViewById(loginid);
-        Login.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sign_in_acc("brian_quilty@hotmail.com","here1243");
-            }
-        });
+
 
 
     }
@@ -264,6 +288,7 @@ public class MainActivity2 extends AppCompatActivity, {
         rt = "583";
         user.put("stocks", rt);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
+        m_uid = LoginActivity.get_muid();
         DocumentReference stocks_m = db.collection("user_stocks").document(m_uid);
         stocks_m.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -275,6 +300,129 @@ public class MainActivity2 extends AppCompatActivity, {
                     } else {
                         db.collection("user_stocks").document(m_uid).set(user);
                         stocks_m.update("stocks", FieldValue.arrayUnion(stocktad));
+                    }
+                } else {
+                    System.out.println("fdc");
+                }
+            }
+        });
+
+        System.out.println(stocks_m);
+        System.out.println(m_uid);
+
+
+
+    }
+
+    void set_pegr(String stocktad, int pegr){
+        Map<String, Object> user = new HashMap<String, Object>();
+        String rt;
+        rt = "583";
+        user.put(stocktad, pegr);
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference stocks_m = db.collection("peg_rat").document(m_uid);
+        stocks_m.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        stocks_m.set(user);
+                    } else {
+                        db.collection("peg_rat").document(m_uid).set(user);
+                    }
+                } else {
+                    System.out.println("fdc");
+                }
+            }
+        });
+
+        System.out.println(stocks_m);
+        System.out.println(m_uid);
+
+
+
+    }
+
+
+
+    void set_bk(String stocktad, int book_v){
+        Map<String, Object> user_bv = new HashMap<String, Object>();
+        String rt;
+        rt = "583";
+        user_bv.put(stocktad, book_v);
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference stocks_m = db.collection("book_v").document(m_uid);
+        stocks_m.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        stocks_m.set(user_bv);
+                    } else {
+                        db.collection("book_v").document(m_uid).set(user_bv);
+                    }
+                } else {
+                    System.out.println("fdc");
+                }
+            }
+        });
+
+        System.out.println(stocks_m);
+        System.out.println(m_uid);
+
+
+
+    }
+
+    void set_prsl(String stocktad, int book_v){
+        Map<String, Object> user_bv = new HashMap<String, Object>();
+        String rt;
+        rt = "583";
+        user_bv.put(stocktad, book_v);
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference stocks_m = db.collection("pri_sl").document(m_uid);
+        stocks_m.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        stocks_m.set(user_bv);
+                    } else {
+                        db.collection("pri_sl").document(m_uid).set(user_bv);
+                    }
+                } else {
+                    System.out.println("fdc");
+                }
+            }
+        });
+
+        System.out.println(stocks_m);
+        System.out.println(m_uid);
+
+
+
+    }
+
+
+    void set_prc(String stocktad, String prc){
+        Map<String, Object> user = new HashMap<String, Object>();
+        String rt;
+        rt = "583";
+        user.put(stocktad, prc);
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference stocks_m = db.collection("price").document(m_uid);
+        stocks_m.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        stocks_m.set(user);
+                    } else {
+                        db.collection("price").document(m_uid).set(user);
                     }
                 } else {
                     System.out.println("fdc");
@@ -330,9 +478,6 @@ public class MainActivity2 extends AppCompatActivity, {
                 // This method is called once with the initial value and again
                 // whenever data at this location is updated.
                 String value = dataSnapshot.getValue(String.class);
-                int rzstID = getResources().getIdentifier("sel_stck_tx", "id", getPackageName());
-                stck = (TextView)findViewById(rzstID);
-                stck.setText(value);
             }
 
             @Override
@@ -343,35 +488,76 @@ public class MainActivity2 extends AppCompatActivity, {
     }
 
     void go_back(){
+        pgb.setVisibility(View.VISIBLE);
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
     }
+
+    void go_news(){
+        pgb.setVisibility(View.VISIBLE);
+        Intent intent = new Intent(this, MainActivity3.class);
+        startActivity(intent);
+    }
+
+    void go_y_stck(){
+        pgb.setVisibility(View.VISIBLE);
+        Intent intentz = new Intent(this, MainActivity4.class);
+        startActivity(intentz);
+    }
+
     void cl_1wk(String symbz){
+        Btn5yr.setTextColor(BLACK);
+        Btn1yr.setTextColor(BLACK);
+        Btn6mo.setTextColor(BLACK);
+        Btn3mo.setTextColor(BLACK);
+        Btn1wk.setTextColor(WHITE);
         PyObject frame = pyobj.callAttr("pr_stck_1wk",symbz);
         byte[] frameData = py.getBuiltins().callAttr("bytes", frame).toJava(byte[].class);
         Bitmap bitmap = BitmapFactory.decodeByteArray(frameData, 0, frameData.length);
         ((ImageView) findViewById(R.id.cameraImage)).setImageBitmap(bitmap);
     }
     void cl_3mo(String symbz){
+        Btn5yr.setTextColor(BLACK);
+        Btn1yr.setTextColor(BLACK);
+        Btn6mo.setTextColor(BLACK);
+        Btn3mo.setTextColor(WHITE);
+        Btn1wk.setTextColor(BLACK);
         PyObject frame = pyobj.callAttr("pr_stck_3m",symbz);
         byte[] frameData = py.getBuiltins().callAttr("bytes", frame).toJava(byte[].class);
         Bitmap bitmap = BitmapFactory.decodeByteArray(frameData, 0, frameData.length);
-        ((ImageView) findViewById(R.id.cameraImage)).setImageBitmap(bitmap);
+        plot = ((ImageView) findViewById(R.id.cameraImage));
+        plot.setImageBitmap(bitmap);
+        plot.setScaleType(ImageView.ScaleType.FIT_XY);
+        plot.setAdjustViewBounds(true);
     }
     void cl_6mo(String symbz){
+        Btn5yr.setTextColor(BLACK);
+        Btn1yr.setTextColor(BLACK);
+        Btn6mo.setTextColor(WHITE);
+        Btn3mo.setTextColor(BLACK);
+        Btn1wk.setTextColor(BLACK);
         PyObject frame = pyobj.callAttr("pr_stck_6m",symbz);
         byte[] frameData = py.getBuiltins().callAttr("bytes", frame).toJava(byte[].class);
         Bitmap bitmap = BitmapFactory.decodeByteArray(frameData, 0, frameData.length);
         ((ImageView) findViewById(R.id.cameraImage)).setImageBitmap(bitmap);
     }
     void cl_1yr(String symbz){
-        Btn1yr.setColorFilter(BlendModeColorFilterCompat.createBlendModeColorFilterCompat(WHITE, BlendModeCompat.SRC_ATOP)
+        Btn5yr.setTextColor(BLACK);
+        Btn1yr.setTextColor(WHITE);
+        Btn6mo.setTextColor(BLACK);
+        Btn3mo.setTextColor(BLACK);
+        Btn1wk.setTextColor(BLACK);
         PyObject frame = pyobj.callAttr("pr_stck_1y",symbz);
         byte[] frameData = py.getBuiltins().callAttr("bytes", frame).toJava(byte[].class);
         Bitmap bitmap = BitmapFactory.decodeByteArray(frameData, 0, frameData.length);
         ((ImageView) findViewById(R.id.cameraImage)).setImageBitmap(bitmap);
     }
     void cl_5yr(String symbz){
+        Btn5yr.setTextColor(WHITE);
+        Btn1yr.setTextColor(BLACK);
+        Btn6mo.setTextColor(BLACK);
+        Btn3mo.setTextColor(BLACK);
+        Btn1wk.setTextColor(BLACK);
         PyObject frame = pyobj.callAttr("pr_stck_5y",symbz);
         byte[] frameData = py.getBuiltins().callAttr("bytes", frame).toJava(byte[].class);
         Bitmap bitmap = BitmapFactory.decodeByteArray(frameData, 0, frameData.length);

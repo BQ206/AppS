@@ -20,6 +20,7 @@ matching_stsymb = []
 
 matching = []
 
+
 def search_nm(srcstr):
     i = 0 
     stock_names.clear()
@@ -48,6 +49,11 @@ def roundToNearestZero(number):
     else:
         # We want 2 digits after decimal point.
         return str(round(n, 2))
+
+
+def peg_rat(symbz):
+    dataz = yf.Ticker(symbz)
+    return float(roundToNearestZero(dataz.info['pegRatio']))
 
 def sort_l(data_list,data_list2):
     new_list = []
@@ -236,16 +242,19 @@ def pr_stck_1wk(symbol):
     symb_df = symbdatt.history(period="1wk")
     print(symb_df)
     bio = io.BytesIO()
+    plt.style.use('dark_background')
+    plt.figure(facecolor='yellow')
     plt.plot(symb_df['Close'])
     plt.gca().margins(x=0)
     N = 9
+    ax = plt.axes()
     plt.gcf().canvas.draw()
     tl = plt.gca().get_xticklabels()
     maxsize = max([t.get_window_extent().width for t in tl])
     m = 0.2 # inch margin
     s = maxsize/plt.gcf().dpi*N+2*m
     margin = m/plt.gcf().get_size_inches()[0]
-    plt.gcf().subplots_adjust(left=margin, right=1.-margin)
+    plt.gcf().subplots_adjust(left=1.-margin, right=1.-margin)
     plt.gcf().set_size_inches(s, plt.gcf().get_size_inches()[1])
     plt.savefig(bio, format="png")
     b = bio.getvalue()
@@ -263,13 +272,14 @@ def pr_stck_3m(symbol):
     symb_df = symbdatt.history(start = past_date,  end = current_date)
     print(symb_df)
     bio = io.BytesIO()
+    plt.style.use('dark_background')
     plt.plot(symb_df['Close'])
     plt.gca().margins(x=0)
     N = 9
     plt.gcf().canvas.draw()
     tl = plt.gca().get_xticklabels()
     maxsize = max([t.get_window_extent().width for t in tl])
-    m = 0.2 # inch margin
+    m = 0.4 # inch margin
     s = maxsize/plt.gcf().dpi*N+2*m
     margin = m/plt.gcf().get_size_inches()[0]
 

@@ -214,6 +214,7 @@ public class MainActivity3 extends AppCompatActivity {
     }
 
     void go_home(){
+        set_progbar();
         Intent intenty = new Intent(this, MainActivity.class);
         startActivity(intenty);
     }
@@ -312,13 +313,10 @@ public class MainActivity3 extends AppCompatActivity {
             PyObject obj4 = pyobj.callAttr("news_r_title",scroll_val_n + i);
             PyObject obj5 = pyobj.callAttr("news_r_descr",scroll_val_n + i );
             PyObject obj6;
-            try {
-                obj6 = pyobj.callAttr("news_r_link", scroll_val_n + i);
-            }
-            catch(Exception e){
-                i += 1;
-                obj6 = pyobj.callAttr("news_r_link", scroll_val_n + i);
-            }
+            obj6 = pyobj.callAttr("news_r_link", scroll_val_n + i);
+
+
+            System.out.println(obj6.toString());
             String id1 = "titlenews" + i;
             int resID = getResources().getIdentifier(id1, "id", getPackageName());
             title0[i] = (TextView)findViewById(resID);
@@ -371,27 +369,28 @@ public class MainActivity3 extends AppCompatActivity {
         }
 
         public void run() {
-            try {
-                if(intv > sel_stocks.length){
-                    intv = 0;
-                    intx += 1;
-                }
-                System.out.println(intv);
-                PyObject stobj5 = pyobj.callAttr("myst_title_t",sel_stocks[intv],intx,intv);
-                PyObject stobj = pyobj.callAttr("ret_media",intx);
-                PyObject stobj2 = pyobj.callAttr("ret_date",intx);
-                PyObject stobj3 = pyobj.callAttr("ret_descr",intx);
-                PyObject stobj4 = pyobj.callAttr("ret_link",intx);
-                news_titl[incr] = stobj5.toString();
-                news_media[incr] = stobj.toString();
-                news_date[incr] = stobj2.toString();
-                news_descr[incr] = stobj3.toString();
-                news_link[incr] = stobj4.toString();
+            if (intv > sel_stocks.length) {
+                intv = 0;
+                intx += 1;
             }
-            catch (Exception e) {
-                // Throwing an exception
-                System.out.println(e);
-            }
+            System.out.println(incr);
+            PyObject stobj5 = pyobj.callAttr("myst_title_t", sel_stocks[intv], intx, intv);
+            System.out.println("ff");
+            PyObject stobj2 = pyobj.callAttr("ret_date", incr);
+            System.out.println("f2");
+            PyObject stobj3 = pyobj.callAttr("ret_descr", incr);
+            System.out.println("f3");
+            PyObject stobj4 = pyobj.callAttr("ret_link", incr);
+            System.out.println("f1");
+            PyObject stobj = pyobj.callAttr("ret_media", incr);
+            news_titl[incr] = stobj5.toString();
+            news_media[incr] = stobj.toString();
+            news_date[incr] = stobj2.toString();
+            news_descr[incr] = stobj3.toString();
+            news_link[incr] = stobj4.toString();
+            System.out.println('f');
+            System.out.println(stobj5.toString());
+            System.out.println(stobj4.toString());
         }
     }
 
@@ -408,6 +407,14 @@ public class MainActivity3 extends AppCompatActivity {
             }
             myThreads[ig] = new Thread(new MultithreadingDemo(ig,cig,lir));
             myThreads[ig].start();
+            try
+            {
+                Thread.sleep(100);
+            }
+            catch(Exception e)
+            {
+                System.out.println(e);
+            }
             if(lir > 9){
                 lir = 0;
             }
@@ -463,16 +470,9 @@ public class MainActivity3 extends AppCompatActivity {
             title0[ix].setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    btyn.setVisibility(View.VISIBLE);
-                    btyn.setText(newdes);
-                    btyn.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            Uri uri = Uri.parse(newlink);
-                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                            startActivity(intent);
-                        }
-                    });
+                    Uri uri = Uri.parse(newlink);
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    startActivity(intent);
                 }
             });
 

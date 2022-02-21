@@ -22,7 +22,6 @@ def callnews():
     webpage = urlopen(req).read()
     global soup
     soup = BeautifulSoup(webpage, 'html.parser')
-    print(soup)
 
 def nxt_pge():
     ogz = "https://www.google.com/"
@@ -37,7 +36,6 @@ def nxt_pge():
 
 def pre_pge(index):
     link = prev[index]
-    print(link)
     req = Request(link, headers={'User-Agent': 'Mozilla/5.0'})
     webpage = urlopen(req).read()
     global soup
@@ -70,9 +68,23 @@ def news_r_descr(index ):
     media = soup.find_all(class_='BNeawe UPmit AP7Wnd')[index].get_text()
     return media
 
+linkz = []
 def news_r_link(index ):
     global soup
-    link = soup.find_all(class_='kCrYT')[index]
+    islinkin = False
+    while(islinkin == False):
+        try:
+            link = soup.find_all(class_='egMi0 kCrYT')[index]
+            link = str(link)
+            linkz1 = link.split("url?q=",1)[1]
+            linkz2 = linkz1.split(">",1)[0]
+            linkz3 = linkz2.split("&amp",1)[0]
+            if(linkz3 not in linkz):
+                islinkin = True
+                linkz.append(linkz3)
+            index += 1
+        except:
+            islinkin = True
     link = str(link)
     linkz1 = link.split("url?q=",1)[1]
     linkz2 = linkz1.split(">",1)[0]
@@ -92,7 +104,7 @@ def get_s_sto():
 titles = []
 media = []
 date = []
-link = []
+linkx = []
 descr = []
 
 
@@ -140,7 +152,7 @@ def ch_isr():
 def ch_isr_f():
     global isres
     isres = 0
-
+linkz = []
 def myst_title_t(stknam,index,index2):
     mystlink = stknam.replace(" ", "+")
     mystlink = mystlink + "stock"
@@ -171,20 +183,31 @@ def myst_title_t(stknam,index,index2):
             prev_myst[index2] = prev_myst[index2] + prz
     if(isres == 1):
         link = prev_myst[index2][0]
-        print("h")
         req = Request(link, headers={'User-Agent': 'Mozilla/5.0'})
         webpage = urlopen(req).read()
         soup = BeautifulSoup(webpage, 'html.parser')
-    link = soup.find_all(class_='kCrYT')[index]
+    islinkin = False
+    indexz = index
+    while(islinkin == False):
+        try:
+            link = soup.find_all(class_='kCrYT')[indexz]
+            link = str(link)
+            linkz1 = link.split("url?q=",1)[1]
+            linkz2 = linkz1.split(">",1)[0]
+            linkz3 = linkz2.split("&amp",1)[0]
+            if(linkz3 not in linkz):
+                islinkin = True
+                linkz.append(linkz3)
+            indexz += 1
+        except: 
+            islinkin = True
     link = str(link)
-    linkz = link.split("href",1)[1]
-    linkz1 = linkz.split("url?q=",1)[1]
+    linkz1 = link.split("url?q=",1)[1]
     linkz2 = linkz1.split(">",1)[0]
     linkz3 = linkz2.split("&amp",1)[0]
-
     title = soup.find_all(class_='BNeawe vvjwJb AP7Wnd')[index].get_text()
     title = str(title)
-    media = soup.find_all(class_='BNeawe UPmit AP7Wnd')[index].get_text()
+    mediaf = soup.find_all(class_='BNeawe UPmit AP7Wnd')[index].get_text()
 
     if(index % 2 != 0):
         index += 1
@@ -192,7 +215,7 @@ def myst_title_t(stknam,index,index2):
     xz = []
     
     myst_date(datz)
-    myst_media(media)
+    myst_media(mediaf)
     myst_link(linkz3)
     myst_desc(linkz3)
     titles.append(title)
@@ -208,14 +231,14 @@ def myst_media(media_apnd):
 
 def myst_link(link_apnd):
     global gnn
-    link.append(link_apnd)
+    linkx.append(link_apnd)
 
 def myst_desc(desc_apnd):
     global gnn
     descr.append(desc_apnd)
 
 def ret_link(index):
-    return link[index]
+    return linkx[index]
 
 def ret_descr(index):
     return descr[index]

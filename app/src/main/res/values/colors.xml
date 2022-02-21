@@ -7,5 +7,14 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
     <color name="color_d">#415a80</color>
+    <color name="themeColor">#034078</color>
+
+    <color name="darkTextColor">#0A1128</color>
+    <color name="contentTextColor">#FEFCFB</color>
+    <color name="register_bk_color">#034078</color>
+    <color name="login_bk_color">#FEFCFB</color>
+    <color name="whiteTextColor">#FEFCFB</color>
+    <color name="primaryTextColor">#034078</color>
 </resources>
