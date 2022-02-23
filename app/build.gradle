@@ -9,7 +9,7 @@ android {
     compileSdk 31
 
     defaultConfig {
-        applicationId "com.android.myapplication"
+        applicationId "com.android.stockapp"
         minSdk 31
         targetSdk 30
         versionCode 1
